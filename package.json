@@ -11,7 +11,7 @@
     "test": "vitest run",
     "lint": "eslint .",
     "check": "npm run lint && npm run test && npm run build",
-    "test:integration": "vitest run test/integration/live-odoo.test.ts",
+    "test:integration": "vitest run test/integration/live-odoo.test.ts test/integration/mcp-e2e.test.ts",
     "test:integration:docker": "bash scripts/run-live-integration.sh"
   },
   "engines": {
@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@modelcontextprotocol/client": "^2.0.0",
     "@types/express": "5.0.3",
     "@types/node": "24.3.0",
     "eslint": "^9.39.5",

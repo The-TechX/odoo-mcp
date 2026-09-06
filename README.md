@@ -158,4 +158,6 @@ For a completely disposable real-Odoo run, Docker can provision Odoo 19 and Post
 npm run test:integration:docker
 ```
 
+The disposable integration suite also connects with the official MCP v2 client over Streamable HTTP, authenticates with Bearer auth, discovers the generic tools, and exercises a create/read/write/delete round trip through MCP into Odoo.
+
 That command initializes a fresh database, seeds a fixed credential that exists only inside the disposable test database, runs the same JSON-2 integration suite, and removes the containers and volumes afterward. It never needs credentials from a real Odoo deployment.
