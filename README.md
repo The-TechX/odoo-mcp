@@ -1,5 +1,7 @@
 # odoo-mcp
 
+[![CI](https://github.com/The-TechX/odoo-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/The-TechX/odoo-mcp/actions/workflows/ci.yml)
+
 A generic Model Context Protocol (MCP) server for integrating MCP clients with Odoo.
 
 ## Status
@@ -105,3 +107,7 @@ These controls are intentionally coarse deployment constraints, not a duplicate 
 Odoo requests emit structured JSON logs to stderr with a request id, model, method, outcome, HTTP status when available, and duration. Request parameters, API keys, authorization headers, and response bodies are intentionally excluded from logs.
 
 Transport failures are classified as `http`, `timeout`, or `network` errors. Timeouts and network failures do not invent an HTTP status code when no HTTP response was received. The generated request id is also forwarded to Odoo as `X-Request-ID` for correlation where upstream infrastructure preserves it.
+
+## Continuous integration
+
+Every pull request and push to `main` runs the same lint, test, TypeScript build, Compose validation, and Docker image build used during local development. CI uses placeholder connection values only for configuration/build validation and does not connect to an Odoo instance.
