@@ -28,7 +28,7 @@ For development without building first:
 npm run dev
 ```
 
-The server uses MCP over stdio. Odoo tools are registered at startup from the configured connection and policy.
+The server supports MCP over stdio (default) and stateless Streamable HTTP. Odoo tools are registered from the configured connection and policy.
 
 ## Docker
 
@@ -111,3 +111,20 @@ Transport failures are classified as `http`, `timeout`, or `network` errors. Tim
 ## Continuous integration
 
 Every pull request and push to `main` runs the same lint, test, TypeScript build, Compose validation, and Docker image build used during local development. CI uses placeholder connection values only for configuration/build validation and does not connect to an Odoo instance.
+
+## Streamable HTTP
+
+For a long-running network endpoint, select the HTTP transport explicitly:
+
+```env
+MCP_TRANSPORT=http
+MCP_HTTP_HOST=0.0.0.0
+MCP_HTTP_PORT=3000
+MCP_HTTP_ALLOWED_HOSTS=mcp.example.com,localhost
+```
+
+The MCP endpoint is `POST /mcp`. HTTP mode is stateless: each request receives a fresh MCP server/transport pair and no MCP session state is stored by `odoo-mcp`. `GET /mcp` and `DELETE /mcp` return 405.
+
+The server uses the MCP SDK's Express helper so host validation can be applied. When binding beyond localhost, configure `MCP_HTTP_ALLOWED_HOSTS` for the hostnames that are expected to reach the service. HTTP transport does **not** add client authentication in this PR; do not expose it directly to an untrusted network. Put authentication/access control in front of it until application-level MCP authentication is implemented.
+
+The Docker Compose file publishes `MCP_HTTP_PORT`; with `MCP_TRANSPORT=http` it can run as a normal long-running container using `docker compose up -d`.
