@@ -93,3 +93,9 @@ ODOO_MCP_DENY_MODELS=res.users,ir.config_parameter
 ```
 
 These controls are intentionally coarse deployment constraints, not a duplicate RBAC system. Use Odoo users, groups, ACLs, and record rules for business authorization.
+
+## Observability and errors
+
+Odoo requests emit structured JSON logs to stderr with a request id, model, method, outcome, HTTP status when available, and duration. Request parameters, API keys, authorization headers, and response bodies are intentionally excluded from logs.
+
+Transport failures are classified as `http`, `timeout`, or `network` errors. Timeouts and network failures do not invent an HTTP status code when no HTTP response was received. The generated request id is also forwarded to Odoo as `X-Request-ID` for correlation where upstream infrastructure preserves it.
