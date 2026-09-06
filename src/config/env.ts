@@ -5,6 +5,9 @@ const envSchema = z.object({
   ODOO_API_KEY: z.string().min(1),
   ODOO_DATABASE: z.string().min(1).optional(),
   ODOO_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+  ODOO_MCP_MODE: z.enum(['read-only', 'read-write']).default('read-only'),
+  ODOO_MCP_ALLOW_MODELS: z.string().optional(),
+  ODOO_MCP_DENY_MODELS: z.string().optional(),
 });
 
 export type OdooConfig = {
@@ -12,6 +15,9 @@ export type OdooConfig = {
   apiKey: string;
   database?: string;
   timeoutMs: number;
+  mode: 'read-only' | 'read-write';
+  allowModels: string[];
+  denyModels: string[];
 };
 
 export function loadOdooConfig(env: NodeJS.ProcessEnv = process.env): OdooConfig {
@@ -21,5 +27,13 @@ export function loadOdooConfig(env: NodeJS.ProcessEnv = process.env): OdooConfig
     apiKey: parsed.ODOO_API_KEY,
     database: parsed.ODOO_DATABASE,
     timeoutMs: parsed.ODOO_TIMEOUT_MS,
+    mode: parsed.ODOO_MCP_MODE,
+    allowModels: parseModelList(parsed.ODOO_MCP_ALLOW_MODELS),
+    denyModels: parseModelList(parsed.ODOO_MCP_DENY_MODELS),
   };
+}
+
+function parseModelList(value?: string): string[] {
+  if (!value) return [];
+  return [...new Set(value.split(',').map((item) => item.trim()).filter(Boolean))];
 }

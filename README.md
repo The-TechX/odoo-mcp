@@ -79,3 +79,17 @@ Generic write operations are exposed separately from reads:
 - `odoo_unlink` — permanently deletes one or more records and is explicitly marked destructive.
 
 Inputs are validated before reaching Odoo: record id lists must be non-empty and bounded, and create/update values cannot be empty. Odoo ACLs and record rules remain authoritative for every mutation.
+
+## Guardrails
+
+`odoo-mcp` adds deployment-level guardrails without replacing Odoo authorization. Odoo ACLs and record rules are still the final authority for every request.
+
+The server starts in `read-only` mode by default. Set `ODOO_MCP_MODE=read-write` to expose effective mutation capability. Optional exact-name model allow/deny lists can further reduce the models reachable through this MCP instance; deny rules take precedence over allow rules.
+
+```env
+ODOO_MCP_MODE=read-only
+ODOO_MCP_ALLOW_MODELS=res.partner,sale.order
+ODOO_MCP_DENY_MODELS=res.users,ir.config_parameter
+```
+
+These controls are intentionally coarse deployment constraints, not a duplicate RBAC system. Use Odoo users, groups, ACLs, and record rules for business authorization.

@@ -1,8 +1,14 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { OdooWriter } from '../odoo/write.js';
+import type { OdooValues } from '../odoo/write.js';
+
+export type WriteService = {
+  create(model: string, values: OdooValues): Promise<number | number[]>;
+  write(model: string, ids: number[], values: OdooValues): Promise<boolean>;
+  unlink(model: string, ids: number[]): Promise<boolean>;
+};
 import { idsSchema, modelSchema, valuesSchema } from './schemas.js';
 
-export function registerWriteTools(server: McpServer, writer: OdooWriter): void {
+export function registerWriteTools(server: McpServer, writer: WriteService): void {
   server.registerTool('odoo_create', {
     description: 'Create a record in an Odoo model using the configured Odoo user permissions.',
     inputSchema: { model: modelSchema, values: valuesSchema },
