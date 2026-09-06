@@ -10,7 +10,9 @@
     "dev": "tsx src/index.ts",
     "test": "vitest run",
     "lint": "eslint .",
-    "check": "npm run lint && npm run test && npm run build"
+    "check": "npm run lint && npm run test && npm run build",
+    "test:integration": "vitest run test/integration/live-odoo.test.ts",
+    "test:integration:docker": "bash scripts/run-live-integration.sh"
   },
   "engines": {
     "node": ">=22"
