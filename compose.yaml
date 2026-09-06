@@ -1,0 +1,6 @@
+services:
+  odoo-mcp:
+    build: .
+    stdin_open: true
+    tty: false
+    restart: unless-stopped
