@@ -52,3 +52,11 @@ Changes are developed PR by PR. Every pull request documents its scope, tests, a
 ## License
 
 MIT
+
+## Odoo connection
+
+The client layer targets Odoo's JSON-2 external API (`/json/2/<model>/<method>`), introduced for Odoo 19. Authentication uses an Odoo API key as a bearer token. `X-Odoo-Database` is sent only when `ODOO_DATABASE` is configured.
+
+Copy `.env.example` and provide the connection values for your Odoo instance. Credentials are read from the environment and are never stored in source code.
+
+> Odoo-specific MCP tools are intentionally still out of scope at this stage; this layer only establishes the reusable API client.
