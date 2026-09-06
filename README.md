@@ -4,7 +4,7 @@ A generic Model Context Protocol (MCP) server for integrating MCP clients with O
 
 ## Status
 
-Technical bootstrap only. Odoo-specific capabilities will be added incrementally through focused pull requests.
+Active development. The server exposes generic Odoo read/write primitives with deployment guardrails, structured errors, and observability.
 
 ## Requirements
 
@@ -26,23 +26,30 @@ For development without building first:
 npm run dev
 ```
 
-The server currently uses MCP over stdio and intentionally exposes no Odoo tools yet.
+The server uses MCP over stdio. Odoo tools are registered at startup from the configured connection and policy.
 
 ## Docker
 
 ```bash
+cp .env.example .env
+# edit .env with your Odoo URL and API key
 docker compose build
 docker compose run --rm odoo-mcp
 ```
+
+Compose passes all supported Odoo and guardrail settings into the container. `ODOO_URL` and `ODOO_API_KEY` are required; Compose fails fast when either is missing. Optional empty values are treated as unset. Because the transport is stdio, `docker compose run --rm odoo-mcp` is the intended interactive container entrypoint rather than a background daemon with a restart policy.
 
 ## Project structure
 
 ```text
 src/
-  index.ts      # process entrypoint / stdio transport
-  server.ts     # MCP server factory
-test/
-  server.test.ts
+  config/          # environment and deployment policy
+  observability/   # structured logging
+  odoo/            # JSON-2 client and read/write services
+  tools/           # MCP tool registration and schemas
+  index.ts         # process entrypoint / stdio transport
+  server.ts        # MCP server factory
+test/              # unit tests
 ```
 
 ## Development approach
@@ -59,7 +66,6 @@ The client layer targets Odoo's JSON-2 external API (`/json/2/<model>/<method>`)
 
 Copy `.env.example` and provide the connection values for your Odoo instance. Credentials are read from the environment and are never stored in source code.
 
-> Odoo-specific MCP tools are intentionally still out of scope at this stage; this layer only establishes the reusable API client.
 
 ## Read-only MCP tools
 

@@ -3,4 +3,11 @@ services:
     build: .
     stdin_open: true
     tty: false
-    restart: unless-stopped
+    environment:
+      ODOO_URL: ${ODOO_URL:?Set ODOO_URL in .env or the shell}
+      ODOO_API_KEY: ${ODOO_API_KEY:?Set ODOO_API_KEY in .env or the shell}
+      ODOO_TIMEOUT_MS: ${ODOO_TIMEOUT_MS:-10000}
+      ODOO_MCP_MODE: ${ODOO_MCP_MODE:-read-only}
+      ODOO_DATABASE: ${ODOO_DATABASE:-}
+      ODOO_MCP_ALLOW_MODELS: ${ODOO_MCP_ALLOW_MODELS:-}
+      ODOO_MCP_DENY_MODELS: ${ODOO_MCP_DENY_MODELS:-}
