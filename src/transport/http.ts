@@ -1,42 +1,33 @@
 import type { Server } from 'node:http';
-import { requireBearerAuth } from '@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js';
-import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import type { Express, Request, Response } from 'express';
+import { bearerAuthChallengeResponse, createMcpHandler, verifyBearerToken } from '@modelcontextprotocol/server';
+import { toNodeHandler } from '@modelcontextprotocol/node';
+import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import type { OdooConfig } from '../config/env.js';
 import { createOdooMcpServer } from '../app.js';
 import { StaticBearerTokenVerifier } from './auth.js';
 
 export function createHttpApp(config: OdooConfig): Express {
-  const app = createMcpExpressApp({
-    host: config.httpHost,
-    allowedHosts: config.httpAllowedHosts.length > 0 ? config.httpAllowedHosts : undefined,
-  });
+  const app = express();
+  app.use(express.json());
 
   if (config.httpAuth === 'bearer') {
-    app.use('/mcp', requireBearerAuth({ verifier: new StaticBearerTokenVerifier(config.httpBearerToken!) }));
+    const options = { verifier: new StaticBearerTokenVerifier(config.httpBearerToken!) };
+    app.use('/mcp', async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        await verifyBearerToken(req.headers.authorization, options);
+        next();
+      } catch (error) {
+        const challenge = bearerAuthChallengeResponse(error);
+        res.status(challenge.status);
+        challenge.headers.forEach((value, key) => res.setHeader(key, value));
+        res.send(await challenge.text());
+      }
+    });
   }
 
-  app.post('/mcp', async (req: Request, res: Response) => {
-    const server = createOdooMcpServer(config);
-    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-    try {
-      await server.connect(transport);
-      await transport.handleRequest(req, res, req.body);
-    } catch {
-      if (!res.headersSent) {
-        res.status(500).json({ jsonrpc: '2.0', error: { code: -32603, message: 'Internal server error' }, id: null });
-      }
-    } finally {
-      res.on('close', () => {
-        void transport.close();
-        void server.close();
-      });
-    }
-  });
-
-  app.get('/mcp', methodNotAllowed);
-  app.delete('/mcp', methodNotAllowed);
+  const handler = createMcpHandler(() => createOdooMcpServer(config));
+  const nodeHandler = toNodeHandler(handler);
+  app.all('/mcp', (req, res) => void nodeHandler(req, res, req.body));
   return app;
 }
 
@@ -46,8 +37,4 @@ export function startHttpServer(config: OdooConfig): Promise<Server> {
     const listener = app.listen(config.httpPort, config.httpHost, () => resolve(listener));
     listener.once('error', reject);
   });
-}
-
-function methodNotAllowed(_req: Request, res: Response): void {
-  res.status(405).json({ jsonrpc: '2.0', error: { code: -32000, message: 'Method not allowed.' }, id: null });
 }

@@ -1,22 +1,14 @@
 import { timingSafeEqual } from 'node:crypto';
-import { InvalidTokenError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
-import type { OAuthTokenVerifier } from '@modelcontextprotocol/sdk/server/auth/provider.js';
-import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
+import { OAuthError, OAuthErrorCode, type AuthInfo, type OAuthTokenVerifier } from '@modelcontextprotocol/server';
 
 export class StaticBearerTokenVerifier implements OAuthTokenVerifier {
   constructor(private readonly expectedToken: string) {}
 
   async verifyAccessToken(token: string): Promise<AuthInfo> {
     if (!tokensEqual(token, this.expectedToken)) {
-      throw new InvalidTokenError('Invalid access token');
+      throw new OAuthError(OAuthErrorCode.InvalidToken, 'Invalid access token');
     }
-
-    return {
-      token,
-      clientId: 'pre-shared-token',
-      scopes: [],
-      expiresAt: 253402300799,
-    };
+    return { token, clientId: 'pre-shared-token', scopes: [], expiresAt: 253402300799 };
   }
 }
 

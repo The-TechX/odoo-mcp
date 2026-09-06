@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/server';
 import type { ReadService } from './tools/read.js';
 import type { WriteService } from './tools/write.js';
 import { registerReadTools } from './tools/read.js';
