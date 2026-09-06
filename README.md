@@ -108,6 +108,12 @@ Odoo requests emit structured JSON logs to stderr with a request id, model, meth
 
 Transport failures are classified as `http`, `timeout`, or `network` errors. Timeouts and network failures do not invent an HTTP status code when no HTTP response was received. The generated request id is also forwarded to Odoo as `X-Request-ID` for correlation where upstream infrastructure preserves it.
 
+## Container releases
+
+Published GitHub Releases produce a versioned OCI image in GitHub Container Registry. For release `v0.1.0`, consumers can pin `ghcr.io/<owner>/odoo-mcp:0.1.0`; the workflow also publishes the corresponding minor tag and `latest`. Pin a version (or digest) for deployments where reproducibility matters.
+
+The publish workflow authenticates with the repository-scoped `GITHUB_TOKEN`; no registry password or personal access token is stored in the repository. Publishing is release-driven, so ordinary pushes to `main` never publish a container image.
+
 ## Continuous integration
 
 Every pull request and push to `main` runs the same lint, test, TypeScript build, Compose validation, and Docker image build used during local development. CI uses placeholder connection values only for configuration/build validation and does not connect to an Odoo instance.
