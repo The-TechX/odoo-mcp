@@ -1,9 +1,14 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { OdooReader } from '../odoo/read.js';
+import type { SearchReadOptions } from '../odoo/read.js';
+
+export type ReadService = {
+  searchRead<T extends Record<string, unknown>>(model: string, options?: SearchReadOptions): Promise<T[]>;
+  fieldsGet(model: string, attributes?: string[]): Promise<Record<string, unknown>>;
+};
 import { jsonValueSchema, modelSchema } from './schemas.js';
 
-export function registerReadTools(server: McpServer, reader: OdooReader): void {
+export function registerReadTools(server: McpServer, reader: ReadService): void {
   server.registerTool('odoo_search_read', {
     description: 'Search and read records from any Odoo model using the permissions of the configured Odoo API user.',
     inputSchema: {

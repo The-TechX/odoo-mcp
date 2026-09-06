@@ -1,10 +1,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { OdooReader } from './odoo/read.js';
-import type { OdooWriter } from './odoo/write.js';
+import type { ReadService } from './tools/read.js';
+import type { WriteService } from './tools/write.js';
 import { registerReadTools } from './tools/read.js';
 import { registerWriteTools } from './tools/write.js';
 
-export type ServerDependencies = { reader?: OdooReader; writer?: OdooWriter };
+export type ServerDependencies = { reader?: ReadService; writer?: WriteService };
 
 export function createServer({ reader, writer }: ServerDependencies = {}): McpServer {
   const server = new McpServer({ name: 'odoo-mcp', version: '0.1.0' });
