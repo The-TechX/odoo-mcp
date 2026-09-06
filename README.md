@@ -138,3 +138,24 @@ The Docker Compose file publishes `MCP_HTTP_PORT`; with `MCP_TRANSPORT=http` it 
 `odoo-mcp` uses the MCP TypeScript SDK v2 packages. The HTTP entrypoint is built with `createMcpHandler()`, which serves the current 2026-07-28 stateless protocol and retains the SDK's stateless compatibility path for 2025-era clients. stdio uses the v2 `serveStdio()` entrypoint.
 
 The transport layer depends on the official split packages (`@modelcontextprotocol/server` and `@modelcontextprotocol/node`) rather than the legacy monolithic v1 SDK package.
+
+## Live Odoo integration test
+
+The unit suite does not require an Odoo server. A separate opt-in integration suite can validate the real Odoo 19 JSON-2 contract:
+
+```bash
+ODOO_TEST_URL=https://odoo.example.com \
+ODOO_TEST_API_KEY=replace-with-a-short-lived-api-key \
+ODOO_TEST_DATABASE=your-database \
+npm run test:integration
+```
+
+The live test uses only generic `res.partner` operations: it inspects fields, creates a uniquely named temporary record, verifies `search_read`, updates it, verifies the update, deletes it, and verifies cleanup. Cleanup also runs from `afterAll` if an assertion fails after record creation. Use a dedicated test database or short-lived API key whenever possible.
+
+For a completely disposable real-Odoo run, Docker can provision Odoo 19 and PostgreSQL automatically:
+
+```bash
+npm run test:integration:docker
+```
+
+That command initializes a fresh database, seeds a fixed credential that exists only inside the disposable test database, runs the same JSON-2 integration suite, and removes the containers and volumes afterward. It never needs credentials from a real Odoo deployment.
