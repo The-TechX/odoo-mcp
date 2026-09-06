@@ -132,3 +132,9 @@ HTTP mode requires a pre-shared Bearer token by default. Set `MCP_HTTP_BEARER_TO
 This pre-shared token mode is a deployment guard, **not** a complete implementation of the MCP OAuth 2.1 authorization flow. For public multi-client deployments, use a standards-compliant authorization server/resource-server integration rather than treating a shared secret as OAuth.
 
 The Docker Compose file publishes `MCP_HTTP_PORT`; with `MCP_TRANSPORT=http` it can run as a normal long-running container using `docker compose up -d`.
+
+## MCP protocol compatibility
+
+`odoo-mcp` uses the MCP TypeScript SDK v2 packages. The HTTP entrypoint is built with `createMcpHandler()`, which serves the current 2026-07-28 stateless protocol and retains the SDK's stateless compatibility path for 2025-era clients. stdio uses the v2 `serveStdio()` entrypoint.
+
+The transport layer depends on the official split packages (`@modelcontextprotocol/server` and `@modelcontextprotocol/node`) rather than the legacy monolithic v1 SDK package.
