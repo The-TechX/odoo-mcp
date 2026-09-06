@@ -69,3 +69,13 @@ The first MCP surface is intentionally read-only and generic:
 - `odoo_fields_get` — inspects model field metadata.
 
 Both tools are annotated as read-only and rely on Odoo itself for ACLs and record rules. The MCP server does not bypass or duplicate Odoo authorization.
+
+## Write MCP tools
+
+Generic write operations are exposed separately from reads:
+
+- `odoo_create` — creates a record.
+- `odoo_write` — updates one or more records.
+- `odoo_unlink` — permanently deletes one or more records and is explicitly marked destructive.
+
+Inputs are validated before reaching Odoo: record id lists must be non-empty and bounded, and create/update values cannot be empty. Odoo ACLs and record rules remain authoritative for every mutation.
