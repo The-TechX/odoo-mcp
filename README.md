@@ -60,3 +60,12 @@ The client layer targets Odoo's JSON-2 external API (`/json/2/<model>/<method>`)
 Copy `.env.example` and provide the connection values for your Odoo instance. Credentials are read from the environment and are never stored in source code.
 
 > Odoo-specific MCP tools are intentionally still out of scope at this stage; this layer only establishes the reusable API client.
+
+## Read-only MCP tools
+
+The first MCP surface is intentionally read-only and generic:
+
+- `odoo_search_read` — searches and reads records from any model available to the configured Odoo user.
+- `odoo_fields_get` — inspects model field metadata.
+
+Both tools are annotated as read-only and rely on Odoo itself for ACLs and record rules. The MCP server does not bypass or duplicate Odoo authorization.
