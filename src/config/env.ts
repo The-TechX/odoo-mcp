@@ -1,13 +1,18 @@
 import { z } from 'zod';
 
+const emptyToUndefined = <T extends z.ZodTypeAny>(schema: T) => z.preprocess(
+  (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
+  schema,
+);
+
 const envSchema = z.object({
   ODOO_URL: z.string().url(),
   ODOO_API_KEY: z.string().min(1),
-  ODOO_DATABASE: z.string().min(1).optional(),
+  ODOO_DATABASE: emptyToUndefined(z.string().min(1).optional()),
   ODOO_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
   ODOO_MCP_MODE: z.enum(['read-only', 'read-write']).default('read-only'),
-  ODOO_MCP_ALLOW_MODELS: z.string().optional(),
-  ODOO_MCP_DENY_MODELS: z.string().optional(),
+  ODOO_MCP_ALLOW_MODELS: emptyToUndefined(z.string().optional()),
+  ODOO_MCP_DENY_MODELS: emptyToUndefined(z.string().optional()),
 });
 
 export type OdooConfig = {
