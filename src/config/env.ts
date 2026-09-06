@@ -17,6 +17,12 @@ const envSchema = z.object({
   MCP_HTTP_HOST: z.string().min(1).default('127.0.0.1'),
   MCP_HTTP_PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   MCP_HTTP_ALLOWED_HOSTS: emptyToUndefined(z.string().optional()),
+  MCP_HTTP_AUTH: z.enum(['bearer', 'none']).default('bearer'),
+  MCP_HTTP_BEARER_TOKEN: emptyToUndefined(z.string().min(32).optional()),
+}).superRefine((value, ctx) => {
+  if (value.MCP_TRANSPORT === 'http' && value.MCP_HTTP_AUTH === 'bearer' && !value.MCP_HTTP_BEARER_TOKEN) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['MCP_HTTP_BEARER_TOKEN'], message: 'Required for HTTP bearer authentication' });
+  }
 });
 
 export type OdooConfig = {
@@ -31,6 +37,8 @@ export type OdooConfig = {
   httpHost: string;
   httpPort: number;
   httpAllowedHosts: string[];
+  httpAuth: 'bearer' | 'none';
+  httpBearerToken?: string;
 };
 
 export function loadOdooConfig(env: NodeJS.ProcessEnv = process.env): OdooConfig {
@@ -47,6 +55,8 @@ export function loadOdooConfig(env: NodeJS.ProcessEnv = process.env): OdooConfig
     httpHost: parsed.MCP_HTTP_HOST,
     httpPort: parsed.MCP_HTTP_PORT,
     httpAllowedHosts: parseModelList(parsed.MCP_HTTP_ALLOWED_HOSTS),
+    httpAuth: parsed.MCP_HTTP_AUTH,
+    httpBearerToken: parsed.MCP_HTTP_BEARER_TOKEN,
   };
 }
 

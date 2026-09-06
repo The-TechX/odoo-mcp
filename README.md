@@ -125,6 +125,10 @@ MCP_HTTP_ALLOWED_HOSTS=mcp.example.com,localhost
 
 The MCP endpoint is `POST /mcp`. HTTP mode is stateless: each request receives a fresh MCP server/transport pair and no MCP session state is stored by `odoo-mcp`. `GET /mcp` and `DELETE /mcp` return 405.
 
-The server uses the MCP SDK's Express helper so host validation can be applied. When binding beyond localhost, configure `MCP_HTTP_ALLOWED_HOSTS` for the hostnames that are expected to reach the service. HTTP transport does **not** add client authentication in this PR; do not expose it directly to an untrusted network. Put authentication/access control in front of it until application-level MCP authentication is implemented.
+The server uses the MCP SDK's Express helper so host validation can be applied. When binding beyond localhost, configure `MCP_HTTP_ALLOWED_HOSTS` for the hostnames that are expected to reach the service.
+
+HTTP mode requires a pre-shared Bearer token by default. Set `MCP_HTTP_BEARER_TOKEN` to a high-entropy value of at least 32 characters and send it as `Authorization: Bearer <token>` on every MCP request. The comparison is constant-time and the token is never logged. `MCP_HTTP_AUTH=none` is an explicit opt-out intended only for already-trusted/private networks.
+
+This pre-shared token mode is a deployment guard, **not** a complete implementation of the MCP OAuth 2.1 authorization flow. For public multi-client deployments, use a standards-compliant authorization server/resource-server integration rather than treating a shared secret as OAuth.
 
 The Docker Compose file publishes `MCP_HTTP_PORT`; with `MCP_TRANSPORT=http` it can run as a normal long-running container using `docker compose up -d`.
