@@ -7,6 +7,7 @@ describe('loadOdooConfig', () => {
       baseUrl: 'https://odoo.example.com', apiKey: 'secret', database: undefined, timeoutMs: 10_000,
       mode: 'read-only', allowModels: [], denyModels: [],
       transport: 'stdio', httpHost: '127.0.0.1', httpPort: 3000, httpAllowedHosts: [],
+      httpAuth: 'bearer', httpBearerToken: undefined,
     });
   });
 

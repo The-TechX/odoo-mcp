@@ -1,12 +1,21 @@
 import type { Server } from 'node:http';
+import { requireBearerAuth } from '@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js';
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import type { Request, Response } from 'express';
+import type { Express, Request, Response } from 'express';
 import type { OdooConfig } from '../config/env.js';
 import { createOdooMcpServer } from '../app.js';
+import { StaticBearerTokenVerifier } from './auth.js';
 
-export function startHttpServer(config: OdooConfig): Promise<Server> {
-  const app = createMcpExpressApp({ host: config.httpHost, allowedHosts: config.httpAllowedHosts });
+export function createHttpApp(config: OdooConfig): Express {
+  const app = createMcpExpressApp({
+    host: config.httpHost,
+    allowedHosts: config.httpAllowedHosts.length > 0 ? config.httpAllowedHosts : undefined,
+  });
+
+  if (config.httpAuth === 'bearer') {
+    app.use('/mcp', requireBearerAuth({ verifier: new StaticBearerTokenVerifier(config.httpBearerToken!) }));
+  }
 
   app.post('/mcp', async (req: Request, res: Response) => {
     const server = createOdooMcpServer(config);
@@ -28,7 +37,11 @@ export function startHttpServer(config: OdooConfig): Promise<Server> {
 
   app.get('/mcp', methodNotAllowed);
   app.delete('/mcp', methodNotAllowed);
+  return app;
+}
 
+export function startHttpServer(config: OdooConfig): Promise<Server> {
+  const app = createHttpApp(config);
   return new Promise((resolve, reject) => {
     const listener = app.listen(config.httpPort, config.httpHost, () => resolve(listener));
     listener.once('error', reject);
