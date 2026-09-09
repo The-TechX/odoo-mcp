@@ -1,28 +1,32 @@
 import type { Server } from 'node:http';
-import { bearerAuthChallengeResponse, createMcpHandler, verifyBearerToken } from '@modelcontextprotocol/server';
+import { createMcpHandler } from '@modelcontextprotocol/server';
+import { mcpAuthMetadataRouter, requireBearerAuth } from '@modelcontextprotocol/express';
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import type { OdooConfig } from '../config/env.js';
 import { createOdooMcpServer } from '../app.js';
-import { StaticBearerTokenVerifier } from './auth.js';
+import { createAuthProvider, type AuthProvider } from './auth.js';
 
-export function createHttpApp(config: OdooConfig): Express {
+export function createHttpApp(config: OdooConfig, authProvider: AuthProvider = createAuthProvider(config)): Express {
   const app = express();
   app.use(express.json());
 
-  if (config.httpAuth === 'bearer') {
-    const options = { verifier: new StaticBearerTokenVerifier(config.httpBearerToken!) };
-    app.use('/mcp', async (req: Request, res: Response, next: NextFunction) => {
+  if (config.httpAuth === 'oauth') {
+    const bearerOptions = authProvider.getBearerAuthOptions();
+    if (!bearerOptions) throw new Error('OAuth mode requires an OAuth auth provider');
+
+    // Metadata is deliberately public. Resolve lazily so app construction stays synchronous/testable.
+    app.use(async (req: Request, res: Response, next: NextFunction) => {
+      if (!req.path.startsWith('/.well-known/')) return next();
       try {
-        await verifyBearerToken(req.headers.authorization, options);
-        next();
+        const metadata = await authProvider.getAuthMetadataOptions();
+        if (!metadata) throw new Error('OAuth mode requires authorization metadata');
+        return mcpAuthMetadataRouter(metadata)(req, res, next);
       } catch (error) {
-        const challenge = bearerAuthChallengeResponse(error);
-        res.status(challenge.status);
-        challenge.headers.forEach((value, key) => res.setHeader(key, value));
-        res.send(await challenge.text());
+        return next(error);
       }
     });
+    app.use('/mcp', requireBearerAuth(bearerOptions));
   }
 
   const handler = createMcpHandler(() => createOdooMcpServer(config));
@@ -31,8 +35,10 @@ export function createHttpApp(config: OdooConfig): Express {
   return app;
 }
 
-export function startHttpServer(config: OdooConfig): Promise<Server> {
-  const app = createHttpApp(config);
+export async function startHttpServer(config: OdooConfig): Promise<Server> {
+  const authProvider = createAuthProvider(config);
+  if (config.httpAuth === 'oauth') await authProvider.getAuthMetadataOptions();
+  const app = createHttpApp(config, authProvider);
   return new Promise((resolve, reject) => {
     const listener = app.listen(config.httpPort, config.httpHost, () => resolve(listener));
     listener.once('error', reject);
