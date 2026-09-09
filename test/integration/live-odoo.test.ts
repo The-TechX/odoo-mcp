@@ -27,8 +27,8 @@ function config(): OdooConfig {
     httpHost: '127.0.0.1',
     httpPort: 3000,
     httpAllowedHosts: [],
-    httpAuth: 'bearer',
-    httpBearerToken: undefined,
+    httpAuth: 'none',
+    authRequiredScopes: [],
   };
 }
 

@@ -1,19 +1,46 @@
-import { timingSafeEqual } from 'node:crypto';
-import { OAuthError, OAuthErrorCode, type AuthInfo, type OAuthTokenVerifier } from '@modelcontextprotocol/server';
+import type { AuthMetadataOptions, BearerAuthOptions } from '@modelcontextprotocol/server';
+import { MCPAuth } from 'mcp-auth';
+import type { OdooConfig } from '../config/env.js';
 
-export class StaticBearerTokenVerifier implements OAuthTokenVerifier {
-  constructor(private readonly expectedToken: string) {}
+/** Authentication boundary consumed by the HTTP transport. */
+export interface AuthProvider {
+  getBearerAuthOptions(): BearerAuthOptions | undefined;
+  getAuthMetadataOptions(): Promise<AuthMetadataOptions | undefined>;
+}
 
-  async verifyAccessToken(token: string): Promise<AuthInfo> {
-    if (!tokensEqual(token, this.expectedToken)) {
-      throw new OAuthError(OAuthErrorCode.InvalidToken, 'Invalid access token');
-    }
-    return { token, clientId: 'pre-shared-token', scopes: [], expiresAt: 253402300799 };
+export class NoAuthProvider implements AuthProvider {
+  getBearerAuthOptions(): undefined { return undefined; }
+  async getAuthMetadataOptions(): Promise<undefined> { return undefined; }
+}
+
+export class OidcAuthProvider implements AuthProvider {
+  private readonly auth: MCPAuth;
+
+  constructor(
+    issuer: string,
+    resource: string,
+    private readonly requiredScopes: string[],
+  ) {
+    this.auth = new MCPAuth({
+      protectedResourceMetadata: {
+        resource,
+        authorizationServer: { issuer, type: 'oidc' },
+        scopesSupported: requiredScopes,
+        resourceName: 'Odoo MCP',
+      },
+    });
+  }
+
+  getBearerAuthOptions(): BearerAuthOptions {
+    return this.auth.getBearerAuthOptions({ requiredScopes: this.requiredScopes });
+  }
+
+  getAuthMetadataOptions(): Promise<AuthMetadataOptions> {
+    return this.auth.getAuthMetadataOptions();
   }
 }
 
-function tokensEqual(actual: string, expected: string): boolean {
-  const actualBuffer = Buffer.from(actual);
-  const expectedBuffer = Buffer.from(expected);
-  return actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer);
+export function createAuthProvider(config: OdooConfig): AuthProvider {
+  if (config.httpAuth === 'none') return new NoAuthProvider();
+  return new OidcAuthProvider(config.authIssuer!, config.authResource!, config.authRequiredScopes);
 }

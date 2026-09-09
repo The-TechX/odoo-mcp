@@ -25,8 +25,8 @@ function config(): OdooConfig {
     httpHost: '127.0.0.1',
     httpPort: 0,
     httpAllowedHosts: [],
-    httpAuth: 'bearer',
-    httpBearerToken: bearerToken,
+    httpAuth: 'none',
+    authRequiredScopes: [],
   };
 }
 
@@ -48,7 +48,7 @@ if (!enabled) {
       if (server) await new Promise<void>((resolve, reject) => server!.close(error => error ? reject(error) : resolve()));
     });
 
-    it('connects with Bearer auth, discovers tools, and performs a full CRUD round trip through MCP', async () => {
+    it('connects over HTTP, discovers tools, and performs a full CRUD round trip through MCP', async () => {
       server = await startHttpServer(config());
       const address = server.address() as AddressInfo;
       const transport = new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${address.port}/mcp`), {

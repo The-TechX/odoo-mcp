@@ -133,9 +133,9 @@ The MCP endpoint is `POST /mcp`. HTTP mode is stateless: each request receives a
 
 The server uses the MCP SDK's Express helper so host validation can be applied. When binding beyond localhost, configure `MCP_HTTP_ALLOWED_HOSTS` for the hostnames that are expected to reach the service.
 
-HTTP mode requires a pre-shared Bearer token by default. Set `MCP_HTTP_BEARER_TOKEN` to a high-entropy value of at least 32 characters and send it as `Authorization: Bearer <token>` on every MCP request. The comparison is constant-time and the token is never logged. `MCP_HTTP_AUTH=none` is an explicit opt-out intended only for already-trusted/private networks.
+HTTP authentication has two modes: `MCP_AUTH_MODE=oauth` (default) and `MCP_AUTH_MODE=none`. OAuth mode makes `odoo-mcp` an OAuth Resource Server: an external OIDC provider such as Keycloak issues JWT access tokens, while `odoo-mcp` validates signature, issuer, resource audience, expiration, and required scopes using `mcp-auth`. Configure `MCP_AUTH_ISSUER`, `MCP_AUTH_RESOURCE` (the public MCP URL, also the required JWT `aud`), and optional `MCP_AUTH_REQUIRED_SCOPES`. `none` is an explicit opt-out intended only for trusted/private networks.
 
-This pre-shared token mode is a deployment guard, **not** a complete implementation of the MCP OAuth 2.1 authorization flow. For public multi-client deployments, use a standards-compliant authorization server/resource-server integration rather than treating a shared secret as OAuth.
+OAuth discovery metadata is published according to RFC 9728 and points MCP clients to the external Authorization Server. `odoo-mcp` does not implement login, authorization-code, token, refresh-token, or client-registration endpoints itself.
 
 The Docker Compose file publishes `MCP_HTTP_PORT`; with `MCP_TRANSPORT=http` it can run as a normal long-running container using `docker compose up -d`.
 
